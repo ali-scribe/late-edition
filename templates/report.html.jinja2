@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Late Edition: {{ newspaper_title }} ({{ date }})</title>
+    <style>
+        :root {
+            --bg-color: #f7f5f0;
+            --paper-color: #fffefb;
+            --text-color: #2b2b2b;
+            --masthead-font: 'Playfair Display', 'Georgia', serif;
+            --body-font: 'Newsreader', 'Georgia', serif;
+            --sans-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            --mono-font: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+            --border-color: #d8d3c5;
+            --accent-color: #8b0000;
+            --accepted-bg: #e6f4ea;
+            --accepted-border: #34a853;
+            --accepted-text: #137333;
+            --flagged-bg: #fce8e6;
+            --flagged-border: #ea4335;
+            --flagged-text: #c5221f;
+            --haunting-badge: #681da8;
+            --haunting-bg: #f3e8fd;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--body-font);
+            line-height: 1.6;
+            padding: 24px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: var(--paper-color);
+            border: 2px solid var(--border-color);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            padding: 32px 40px;
+        }
+
+        /* Newspaper Masthead */
+        header.masthead {
+            text-align: center;
+            border-bottom: 4px double var(--border-color);
+            padding-bottom: 20px;
+            margin-bottom: 24px;
+        }
+
+        .masthead-edition {
+            font-family: var(--sans-font);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #666;
+            margin-bottom: 6px;
+        }
+
+        h1.title {
+            font-family: var(--masthead-font);
+            font-size: 2.8rem;
+            font-weight: 900;
+            letter-spacing: -0.5px;
+            color: #1a1a1a;
+            margin: 4px 0 10px 0;
+            text-transform: uppercase;
+        }
+
+        .meta-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+            padding: 8px 12px;
+            font-family: var(--sans-font);
+            font-size: 0.9rem;
+            color: #444;
+            margin-top: 10px;
+        }
+
+        /* Statistics Dashboard */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+            font-family: var(--sans-font);
+        }
+
+        .stat-card {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+
+        .stat-card.accepted .stat-value { color: var(--accepted-text); }
+        .stat-card.flagged .stat-value { color: var(--flagged-text); }
+        .stat-card.hauntings .stat-value { color: var(--haunting-badge); }
+
+        .stat-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        /* Hauntings Section */
+        .hauntings-section {
+            background: var(--haunting-bg);
+            border: 1px solid #d7aefb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 32px;
+        }
+
+        .hauntings-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .hauntings-header h2 {
+            font-family: var(--sans-font);
+            font-size: 1.25rem;
+            color: #491077;
+            font-weight: 700;
+        }
+
+        .hauntings-badge {
+            background: var(--haunting-badge);
+            color: white;
+            font-family: var(--sans-font);
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .hauntings-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .haunting-item {
+            background: white;
+            border: 1px solid #e0c5fd;
+            border-left: 4px solid var(--haunting-badge);
+            border-radius: 4px;
+            padding: 12px 16px;
+            font-family: var(--sans-font);
+            font-size: 0.9rem;
+        }
+
+        .haunting-item strong {
+            color: var(--haunting-badge);
+        }
+
+        .haunting-diff {
+            font-family: var(--mono-font);
+            font-size: 0.82rem;
+            background: #fafafa;
+            border: 1px solid #eee;
+            padding: 8px 12px;
+            margin-top: 6px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+
+        /* Main Multi-Column Section */
+        .content-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px;
+            margin-bottom: 32px;
+        }
+
+        @media (max-width: 992px) {
+            .content-columns {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .column-panel {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .column-panel h2 {
+            font-family: var(--masthead-font);
+            font-size: 1.35rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+            margin-bottom: 14px;
+            color: #1a1a1a;
+        }
+
+        .text-scroll-box {
+            font-size: 1.05rem;
+            line-height: 1.7;
+            max-height: 700px;
+            overflow-y: auto;
+            padding: 12px;
+            background: #fdfdfd;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+
+        .raw-ocr {
+            font-family: var(--mono-font);
+            font-size: 0.88rem;
+            color: #444;
+        }
+
+        .restored-text {
+            color: #111;
+        }
+
+        /* Scan Image Panel */
+        .scan-panel {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .scan-panel h2 {
+            font-family: var(--masthead-font);
+            font-size: 1.35rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .scan-img-wrapper {
+            max-height: 800px;
+            overflow: auto;
+            border: 1px solid #ddd;
+            background: #333;
+            padding: 8px;
+            display: inline-block;
+            max-width: 100%;
+        }
+
+        .scan-img-wrapper img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        /* Highlighted Edits Section */
+        .edits-section {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+
+        .edits-section h2 {
+            font-family: var(--masthead-font);
+            font-size: 1.4rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+            margin-bottom: 16px;
+        }
+
+        .edits-legend {
+            display: flex;
+            gap: 20px;
+            font-family: var(--sans-font);
+            font-size: 0.85rem;
+            margin-bottom: 18px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-chip {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        .chip-accepted {
+            background: var(--accepted-bg);
+            border: 1px solid var(--accepted-border);
+            color: var(--accepted-text);
+        }
+
+        .chip-flagged {
+            background: var(--flagged-bg);
+            border: 1px solid var(--flagged-border);
+            color: var(--flagged-text);
+            text-decoration: line-through;
+        }
+
+        .chunk-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            margin-bottom: 18px;
+            padding: 16px;
+            background: #fafafa;
+        }
+
+        .chunk-card.status-accepted {
+            border-left: 5px solid var(--accepted-border);
+        }
+
+        .chunk-card.status-flagged {
+            border-left: 5px solid var(--flagged-border);
+            background: #fffafa;
+        }
+
+        .chunk-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: var(--sans-font);
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .status-badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .badge-accepted {
+            background: var(--accepted-bg);
+            color: var(--accepted-text);
+            border: 1px solid var(--accepted-border);
+        }
+
+        .badge-flagged {
+            background: var(--flagged-bg);
+            color: var(--flagged-text);
+            border: 1px solid var(--flagged-border);
+        }
+
+        .chunk-diff-body {
+            font-family: var(--mono-font);
+            font-size: 0.9rem;
+            line-height: 1.7;
+            background: white;
+            padding: 12px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+
+        /* Inline Diff Spans */
+        ins.diff-ins {
+            background-color: var(--accepted-bg);
+            border: 1px solid var(--accepted-border);
+            color: var(--accepted-text);
+            text-decoration: none;
+            padding: 1px 4px;
+            border-radius: 2px;
+        }
+
+        del.diff-del {
+            background-color: var(--flagged-bg);
+            border: 1px solid var(--flagged-border);
+            color: var(--flagged-text);
+            padding: 1px 4px;
+            border-radius: 2px;
+        }
+
+        span.diff-flagged {
+            background-color: #ffeef0;
+            border-bottom: 2px dashed var(--flagged-border);
+            color: var(--flagged-text);
+            padding: 1px 4px;
+        }
+
+        footer {
+            text-align: center;
+            font-family: var(--sans-font);
+            font-size: 0.85rem;
+            color: #888;
+            border-top: 1px solid var(--border-color);
+            padding-top: 16px;
+            margin-top: 32px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Masthead -->
+        <header class="masthead">
+            <div class="masthead-edition">Late Edition &bull; Chronicling America OCR Restoration Report</div>
+            <h1 class="title">{{ newspaper_title }}</h1>
+            <div class="meta-bar">
+                <span><strong>Date:</strong> {{ date }}</span>
+                <span><strong>LCCN:</strong> {{ lccn }}</span>
+                <span><strong>Sequence:</strong> Page {{ sequence }}</span>
+                <span><strong>Model:</strong> {{ model_name }}</span>
+            </div>
+        </header>
+
+        <!-- Stats Dashboard -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">{{ total_chunks }}</div>
+                <div class="stat-label">Total Chunks</div>
+            </div>
+            <div class="stat-card accepted">
+                <div class="stat-value">{{ accepted_chunks }}</div>
+                <div class="stat-label">Accepted Chunks</div>
+            </div>
+            <div class="stat-card flagged">
+                <div class="stat-value">{{ flagged_chunks }}</div>
+                <div class="stat-label">Reverted Chunks</div>
+            </div>
+            <div class="stat-card hauntings">
+                <div class="stat-value">{{ total_hauntings }}</div>
+                <div class="stat-label">Hauntings Blocked</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ "%.1f"|format(avg_similarity * 100) }}%</div>
+                <div class="stat-label">Average Similarity</div>
+            </div>
+        </div>
+
+        <!-- Flagged Hauntings Section -->
+        {% if hauntings %}
+        <section class="hauntings-section">
+            <div class="hauntings-header">
+                <h2>Flagged Hauntings & Hallucinations</h2>
+                <span class="hauntings-badge">{{ hauntings|length }} Blocked</span>
+            </div>
+            <p style="font-family: var(--sans-font); font-size: 0.9rem; color: #555; margin-bottom: 12px;">
+                The guard detected unverified named entities or prohibited changes in the model output. 
+                These chunks were rejected and safely reverted to the original OCR text:
+            </p>
+            <div class="hauntings-list">
+                {% for item in hauntings %}
+                <div class="haunting-item">
+                    <div>
+                        <strong>Chunk #{{ item.chunk_index }}:</strong>
+                        <span>{{ item.reason }}</span>
+                    </div>
+                    {% if item.hauntings %}
+                    <div style="margin-top: 4px;">
+                        <em>Hallucinated terms:</em> <code>{{ item.hauntings|join(', ') }}</code>
+                    </div>
+                    {% endif %}
+                    <div class="haunting-diff">
+Original:  {{ item.original_snippet }}
+Attempted: {{ item.attempted_snippet }}
+Action:    Reverted to original OCR
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- Newspaper Scan Image -->
+        <section class="scan-panel">
+            <h2>Historic Page Scan</h2>
+            <div class="scan-img-wrapper">
+                {% if image_data_uri %}
+                <img src="{{ image_data_uri }}" alt="Scan of {{ newspaper_title }} ({{ date }})">
+                {% elif image_rel_path %}
+                <img src="{{ image_rel_path }}" alt="Scan of {{ newspaper_title }} ({{ date }})">
+                {% else %}
+                <p style="color: #ccc; padding: 20px;">No scan image available.</p>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- Side-by-Side: Raw OCR vs Restored Text -->
+        <div class="content-columns">
+            <div class="column-panel">
+                <h2>Raw Chronicling America OCR</h2>
+                <div class="text-scroll-box raw-ocr">{{ raw_ocr_text }}</div>
+            </div>
+            <div class="column-panel">
+                <h2>Restored Text (Guarded)</h2>
+                <div class="text-scroll-box restored-text">{{ restored_text }}</div>
+            </div>
+        </div>
+
+        <!-- Highlighted Edits Diff View -->
+        <section class="edits-section">
+            <h2>Highlighted Edits & Guard Analysis</h2>
+            <div class="edits-legend">
+                <div class="legend-item">
+                    <span class="legend-chip chip-accepted">Accepted Correction</span>
+                    <span>Valid OCR error / spelling fix</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-chip chip-flagged">Flagged / Reverted</span>
+                    <span>Rejected change (reverted to raw OCR)</span>
+                </div>
+            </div>
+
+            {% for chunk in chunk_analyses %}
+            <div class="chunk-card status-{{ 'accepted' if chunk.accepted else 'flagged' }}">
+                <div class="chunk-header">
+                    <span>Chunk #{{ loop.index }} &bull; Similarity: {{ "%.1f"|format(chunk.similarity_ratio * 100) }}%</span>
+                    <span class="status-badge badge-{{ 'accepted' if chunk.accepted else 'flagged' }}">
+                        {{ 'ACCEPTED' if chunk.accepted else 'REVERTED' }}
+                    </span>
+                </div>
+                {% if chunk.flag_reasons %}
+                <div style="font-family: var(--sans-font); font-size: 0.82rem; color: var(--flagged-text); margin-bottom: 8px;">
+                    <strong>Flagged reasons:</strong> {{ chunk.flag_reasons|join('; ') }}
+                </div>
+                {% endif %}
+                <div class="chunk-diff-body">{{ chunk.html_diff|safe }}</div>
+            </div>
+            {% endfor %}
+        </section>
+
+        <footer>
+            Late Edition &bull; Public-domain historic newspaper OCR correction with Gemma 4 and safety guards &bull; Chronicling America (Library of Congress)
+        </footer>
+    </div>
+</body>
+</html>
